@@ -1,5 +1,22 @@
 # Changelog
 
+## v1.4.9
+
+### Enhancements
+
+* Put telemetry on dehydration by @cdegroot in https://github.com/commanded/commanded/issues/552
+* Add issue template by @yordis in https://github.com/commanded/commanded/issues/630
+* Add generic serializer behaviour by @Nezteb in https://github.com/commanded/commanded/issues/626
+* Add aggregate behaviour by @Nezteb in https://github.com/commanded/commanded/issues/627
+* Batching support by @fmterrorf in https://github.com/commanded/commanded/issues/569
+* Make Aggregate.take_snapshot/3 a blocking call by @satom99 in https://github.com/commanded/commanded/issues/636
+
+### Bug fixes
+
+* Fix flakey test by @drteeth in https://github.com/commanded/commanded/pull/599
+* Fix malformed markdown link by @djonn in https://github.com/commanded/commanded/issues/619
+* Update elixir slack link by @afomi in https://github.com/commanded/commanded/issues/620
+
 ## v1.4.8
 
 ### Bug fixes
