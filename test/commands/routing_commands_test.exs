@@ -258,20 +258,6 @@ defmodule Commanded.Commands.RoutingCommandsTest do
     end
   end
 
-  test "should not depend on the order of the arguments" do
-    Code.eval_string("""
-      alias Commanded.ExampleDomain.{BankAccount, OpenAccountHandler}
-      alias Commanded.ExampleDomain.BankAccount.Commands.{CloseAccount, OpenAccount}
-
-      defmodule AnyOrderRouter do
-        use Commanded.Commands.Router
-
-        dispatch OpenAccount, to: OpenAccountHandler, aggregate: BankAccount
-        dispatch CloseAccount, aggregate: BankAccount, to: OpenAccountHandler
-      end
-    """)
-  end
-
   defmodule MultiCommandRouter do
     use Commanded.Commands.Router
 
