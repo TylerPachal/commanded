@@ -44,6 +44,21 @@ The `c:Commanded.ProcessManagers.ProcessManager.apply/2` function is used to mut
 
 This callback function is optional, the default behaviour is to retain the process manager's current state.
 
+## Event handling execution order
+
+When a process manager receives an event, the callbacks are executed in this order:
+
+1. `handle/2` is called to return commands to dispatch.
+2. Commands are dispatched to their registered aggregates.
+3. After successful command dispatch, `apply/2` is called to mutate the process manager's state.
+4. The updated state is persisted to the event store.
+5. The event is acknowledged as processed.
+6. `after_command/2` is called for each successfully dispatched command.
+
+If any step fails, the `error/3` callback is invoked.
+
+If the process manager crashes before the event is acknowledged, it will re-process the event when after restarting.
+
 ## `error/3`
 
 You can define an `c:Commanded.ProcessManagers.ProcessManager.error/3` callback function to handle any errors or exceptions during event handling or returned by commands dispatched from your process manager. The function is passed the error (e.g. `{:error, :failure}`), the failed event or command, and a failure context. See `Commanded.ProcessManagers.FailureContext` for details.
@@ -215,7 +230,7 @@ The name given to the process manager *must* be unique. This is used when subscr
 
 You can choose to start the process router's event store subscription from the `:origin`, `:current` position or an exact event number using the `start_from` option. The default is to use `:origin` so it will receive all events. You typically use `:current` when adding a new process manager to an already deployed system containing historical events.
 
-Process manager instance state is persisted to storage after each handled event. This allows the process manager to resume should the host process terminate.
+Process manager instance state is persisted to storage after each handled event. The state is stored as a snapshot in the event store, using the process UUID as the snapshot identifier. This allows the process manager to resume should the host process terminate.
 
 ## Configuration options
 
