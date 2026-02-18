@@ -95,6 +95,7 @@ defmodule Commanded.EventStore.Adapters.InMemory do
       concurrency_limit: Keyword.get(opts, :concurrency_limit),
       name: subscription_name,
       partition_by: Keyword.get(opts, :partition_by),
+      selector: Keyword.get(opts, :selector),
       start_from: start_from,
       stream_uuid: stream_uuid
     }
@@ -483,14 +484,29 @@ defmodule Commanded.EventStore.Adapters.InMemory do
         unseen_event =
           deserialize(state, unseen_event) |> set_event_number_from_version(stream_uuid)
 
-        case PersistentSubscription.publish(subscription, unseen_event) do
-          {:ok, subscription} -> publish_events(state, subscription)
-          {:error, :no_subscriber_available} -> subscription
+        if selected?(unseen_event, subscription) do
+          case PersistentSubscription.publish(subscription, unseen_event) do
+            {:ok, subscription} -> publish_events(state, subscription)
+            {:error, :no_subscriber_available} -> subscription
+          end
+        else
+          %RecordedEvent{event_number: event_number} = unseen_event
+          subscription = PersistentSubscription.checkpoint(subscription, event_number)
+          publish_events(state, subscription)
         end
 
       nil ->
         subscription
     end
+  end
+
+  defp selected?(event, %PersistentSubscription{selector: selector})
+       when is_function(selector, 1) do
+    selector.(event)
+  end
+
+  defp selected?(_event, %PersistentSubscription{}) do
+    true
   end
 
   defp stop_subscription(%State{} = state, subscription) do
