@@ -479,24 +479,27 @@ defmodule Commanded.EventStore.Adapters.InMemory do
 
     position = if checkpoint == 0, do: -1, else: -(checkpoint + 1)
 
-    case Enum.at(events, position) do
-      %RecordedEvent{} = unseen_event ->
-        unseen_event =
-          deserialize(state, unseen_event) |> set_event_number_from_version(stream_uuid)
+    unseen_event =
+      with %RecordedEvent{} = event <- Enum.at(events, position) do
+        state
+        |> deserialize(event)
+        |> set_event_number_from_version(stream_uuid)
+      end
 
-        if selected?(unseen_event, subscription) do
-          case PersistentSubscription.publish(subscription, unseen_event) do
-            {:ok, subscription} -> publish_events(state, subscription)
-            {:error, :no_subscriber_available} -> subscription
-          end
-        else
-          %RecordedEvent{event_number: event_number} = unseen_event
-          subscription = PersistentSubscription.checkpoint(subscription, event_number)
-          publish_events(state, subscription)
+    cond do
+      is_nil(unseen_event) ->
+        subscription
+
+      unseen_event && selected?(unseen_event, subscription) ->
+        case PersistentSubscription.publish(subscription, unseen_event) do
+          {:ok, subscription} -> publish_events(state, subscription)
+          {:error, :no_subscriber_available} -> subscription
         end
 
-      nil ->
-        subscription
+      unseen_event ->
+        %RecordedEvent{event_number: event_number} = unseen_event
+        subscription = PersistentSubscription.checkpoint(subscription, event_number)
+        publish_events(state, subscription)
     end
   end
 
