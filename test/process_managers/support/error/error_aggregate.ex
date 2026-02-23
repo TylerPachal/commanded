@@ -98,7 +98,7 @@ defmodule Commanded.ProcessManagers.ErrorAggregate do
     do: {:error, :failed}
 
   def execute(%ErrorAggregate{}, %ContinueProcess{process_uuid: process_uuid, reply_to: reply_to}),
-    do: %ProcessContinued{process_uuid: process_uuid, reply_to: reply_to}
+      do: %ProcessContinued{process_uuid: process_uuid, reply_to: reply_to}
 
   def apply(%ErrorAggregate{} = aggregate, %ProcessStarted{process_uuid: process_uuid}),
     do: %ErrorAggregate{aggregate | process_uuid: process_uuid}
